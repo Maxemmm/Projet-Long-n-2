@@ -12,7 +12,7 @@ The goal of this project is to develop a complete device that can measure severa
 - LED that lights up for a few seconds when the system is started.
 - Data display in graphical form on an internet application: Ubidots STEM during the development phase and an internal Polytech website for the final rendering of the project.
 
-## Plugins
+## Components
 In order to realize this project, we had to find components that best respond to the imposed specifications by focusing on the main constraint which is the low consumption of the system:
 
 | Components | Functions | Price |
