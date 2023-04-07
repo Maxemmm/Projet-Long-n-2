@@ -1,4 +1,3 @@
-#include "system.h"
 #include <Arduino.h>
 #include <SensirionI2CScd4x.h>
 #include "Adafruit_VEML7700.h"
@@ -8,16 +7,17 @@
 #include <stdlib.h>
 #include <MKRWAN.h>
 #include "ArduinoLowPower.h"
+#include "system.h"
 
-#if ONLINE_STATUS == 1
-  LoRaModem modem;
-#endif
+LoRaModem modem;
+String appEui = "0000000000000000";
+String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
 Adafruit_VEML7700 veml = Adafruit_VEML7700();
 SensirionI2CScd4x scd4x;
 
 scd4xSensor data1;
 otherSensor data2;
-SystemConfigurationSettings system;
+systemConfigurationSettings device;
 
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
@@ -66,6 +66,14 @@ void initializeLoRaWANGatewayConnexion() {
 }
 
 void initializeGroveSensor() {
+  Wire.begin();
+  scd4x.begin(Wire); // enable connection
+  scd4x.reinit();
+
+  scd4x.setAmbientPressure(1013); // 1013 hPa
+  scd4x.setSensorAltitude(35); // 35 m
+  // scd4x.setAutomaticSelfCalibration(1); // enable self calibration
+
   uint16_t error;
   char errorMessage[256];
   error = scd4x.stopPeriodicMeasurement(); // stop potentially previously started measurement
@@ -75,9 +83,9 @@ void initializeGroveSensor() {
     Serial.println(errorMessage);
   }
 
-  error = scd4x.startPeriodicMeasurement(); // get first measurement
+  error = scd4x.startLowPowerPeriodicMeasurement(); // get first measurement
   if (error) {
-    Serial.print("[ERROR] Could not execute startPeriodicMeasurement(): ");
+    Serial.print("[ERROR] Could not execute startLowPowerPeriodicMeasurement(): ");
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
   }  
@@ -116,8 +124,6 @@ void initializeSensors() {
   veml.interruptEnable(true);
   Serial.println("[ALERT] Lux sensor ready.");
 
-  Wire.begin();
-  scd4x.begin(Wire); // enable connection
   initializeGroveSensor();  
   Serial.println("[ALERT] Grove sensor ready.");
 }
@@ -144,15 +150,17 @@ void initializeScreen() {
 
 
 // ------------------------------- SENSORS ------------------------------ //
-unsigned int getPeakToPeakValue() {
-  /* Sound level variables*/
+double readNoiseLevel() {
+  double pa_reference = 0.00002; // Référence pour le calcul de l'amplitude (Pa/LSB)
+  double sensitivity = 66; // Gain de l'amplificateur du microphone
+  double VCC = 5.0; // Tension d'alimentation du microphone (V)
   unsigned long startMillis = millis();  // Heure de début de l'échantillonnage
   unsigned int peakToPeak = 0;   // Mesure d'amplitude
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
   int sampleWindow = 200; // La taille de la fenêtre d'échantillonnage (en millisecondes)
   unsigned int sample; // Valeur de l'échantillon
-
+  
   // Acquisition de l'échantillon de son
   while (millis() - startMillis < sampleWindow) {
     sample = analogRead(microphonePin);
@@ -163,14 +171,8 @@ unsigned int getPeakToPeakValue() {
         signalMin = sample;
       }
     }
-  } return (signalMax - signalMin);
-}
-
-double readSoundLevel() {
-  double pa_reference = 0.00002; // Référence pour le calcul de l'amplitude (Pa/LSB)
-  double sensitivity = 66; // Gain de l'amplificateur du microphone
-  double VCC = 5.0; // Tension d'alimentation du microphone (V)
-  unsigned int peakToPeak = getPeakToPeakValue();
+  }
+  peakToPeak = (signalMax - signalMin);
   
   // Conversion RMS en dB
   double volts = (peakToPeak * VCC) / 1024;
@@ -188,22 +190,28 @@ int readBatteryLevel() {
 
 void readSensorsData() {
   // -------------------- SCD4X SENSOR -------------------- //
+  if (isSleep) {
+    isSleep = false;
+    scd4x.wakeUp();
+  }
   uint16_t error;
   char errorMessage[256];
   error = scd4x.readMeasurement(data1.co2Value, data1.temperatureValue, data1.humidityValue);
   if (error) {
-    Serial.print("Error trying to execute readMeasurement(): ");
+    Serial.print("[ERROR] Couldn't execute readMeasurement(): ");
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
   } else if (data1.co2Value == 0) {
     Serial.println("[ERROR] Invalid co2 sample detected.");
   }
+  scd4x.powerDown();
+  isSleep = true;  
   // ------------------------------------------------------ //
 
   // -------------------- SOUND SENSOR -------------------- //
-  data2.soundValue = readSoundLevel();
-  if (data2.soundValue == 0) {
-    Serial.print("Error trying to execute readSoundLevel(): ");
+  data2.noiseValue = readNoiseLevel();
+  if (data2.noiseValue == 0) {
+    Serial.print("[ERROR] Couldn't execute readNoiseLevel(): ");
     Serial.println("invalid value.");
   }
   // ------------------------------------------------------ //
@@ -221,7 +229,7 @@ void readSensorsData() {
   // }
   // ------------------------------------------------------ //
 
-  data2.batteryValue = getBatteryLevel();
+  data2.batteryValue = readBatteryLevel();
 }
 // --------------------------- END OF SENSORS --------------------------- //
 
@@ -400,9 +408,9 @@ void setupScreenOverlay() {
 
 
 // ----------------------------- DISPLAYS ----------------------------- //
-void displayDatasToScreen(uint16_t co2, float temp, float hum, double sound, int battery) {
+void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int batteryLevel) {
   char co2Buffer[10];
-  utoa(co2, co2Buffer, 10);
+  utoa(co2Sensor, co2Buffer, 10);
   
   #if DISPLAY_MODE == 1
     co2Canvas.setTextSize(2); // size 3
@@ -415,7 +423,7 @@ void displayDatasToScreen(uint16_t co2, float temp, float hum, double sound, int
   #endif
 
   char tempBuffer[10];
-  dtostrf(temp, 4, 1, tempBuffer);
+  dtostrf(tempSensor, 4, 1, tempBuffer);
   
   #if DISPLAY_MODE == 1
     tempCanvas.setTextSize(2);
@@ -428,7 +436,7 @@ void displayDatasToScreen(uint16_t co2, float temp, float hum, double sound, int
   #endif
 
   char humBuffer[10];
-  dtostrf(hum, 4, 1, humBuffer);
+  dtostrf(humSensor, 4, 1, humBuffer);
   
   #if DISPLAY_MODE == 1
     humCanvas.setTextSize(2);
@@ -440,21 +448,21 @@ void displayDatasToScreen(uint16_t co2, float temp, float hum, double sound, int
     // TODO
   #endif
 
-  char soundBuffer[10];
-  dtostrf(sound, 4, 1, soundBuffer);
+  char noiseBuffer[10];
+  dtostrf(noiseSensor, 4, 1, noiseBuffer);
 
   #if DISPLAY_MODE == 1
     soundCanvas.setTextSize(2);
     soundCanvas.fillScreen(0);
     soundCanvas.setCursor(0, 0);
-    soundCanvas.print(soundBuffer);
+    soundCanvas.print(noiseBuffer);
     display.drawBitmap((2*WIDTH/3 + 10), (HEIGHT/3 - 12), soundCanvas.getBuffer(), soundCanvas.width(), soundCanvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
     // TODO
   #endif
 
   char batteryBuffer[10];
-  itoa(battery, batteryBuffer, 10);
+  itoa(batteryLevel, batteryBuffer, 10);
   
   #if DISPLAY_MODE == 1
     batteryCanvas.setTextSize(2);
@@ -467,10 +475,9 @@ void displayDatasToScreen(uint16_t co2, float temp, float hum, double sound, int
   #endif
 
   Serial.println("[ALERT] Sensor's datas are being pushed.");
-  display.display();
 }
 
-void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSensor, double soundSensor, int luxSens, int batteryLevel) {
+void displayDatasToTerminal(unsigned short co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSens, int batteryLevel) {
   Serial.print("[INFO] Co2: ");
   Serial.print(co2Sensor);
   Serial.println(" ppm");
@@ -484,7 +491,7 @@ void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSenso
   Serial.println(" %");
   
   Serial.print("[INFO] Sound: ");
-  Serial.print(soundSensor);
+  Serial.print(noiseSensor);
   Serial.println(" dB");
 
   Serial.print("[INFO] Lux: ");
@@ -499,13 +506,13 @@ void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSenso
 
 
 // ----------------------------- TX & RX ------------------------------ //
-void dataTransmission(uint16_t co2Sensor, float tempSensor, float humSensor, double soundSensor, int luxSens, int batteryLevel) {
+void dataTransmission(unsigned short co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSens, int batteryLevel) {
   uint16_t co2 = co2Sensor;
   short co2_2 = co2 >> 8;
   short co2_1 = (co2 << 8) >> 8;
   short temp = (short)tempSensor;
   short hum = (short)humSensor;
-  short sound = (short)soundSensor;
+  short sound = (short)noiseSensor;
   short lux = (short)luxSens;
   short batt = (short)batteryLevel;
   short err;
@@ -551,29 +558,78 @@ void dataReception() {
 // --------------------------- INTERRUPTION --------------------------- //
 void buttonISR() {
   Serial.println("[INFO] Interruption triggered.");
-  readSensorsData();
-  displayDatasToTerminal(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.soundValue, data2.luxValue, data2.batteryValue);
+
+  if (isSleep) {
+    isSleep = false;
+    scd4x.wakeUp();
+  }
   
-  #if ONLINE_STATUS == 1
-    datasTransmissions(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.soundValue, data2.luxValue, data2.batteryValue);
-  #endif
+  uint16_t error;
+  char errorMessage[256];
+  
+  float co2, temperature, humidity;
+  uint8_t data[12], counter;
 
-  sensorAlertManager(0, data1.co2Value, system.co2Threshold);
-  sensorAlertManager(1, data1.temperatureValue, system.temperatureThreshold);
-  sensorAlertManager(2, data1.humidityValue, system.humidityThreshold);
-  sensorAlertManager(3, data2.soundValue, system.soundThreshold); 
-  sensorAlertManager(4, data2.luxValue, system.luxThreshold);
-  sensorAlertManager(5, data2.batteryValue, system.batteryThreshold);
+  bool isDataReady = false;
+  error = scd4x.getDataReadyFlag(isDataReady);
+  if (error) {
+    Serial.print("Error trying to execute getDataReadyFlag(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+    return;
+  }
+  
+  if (!isDataReady) {
+    Serial.println("[WARNING] Elapsed time between previous measure is too short.");
+    return;
+  } else {
+    // send read data command
+    Wire.beginTransmission(SCD_ADDRESS);
+    Wire.write(0xEC);
+    Wire.write(0x05);
+    Wire.endTransmission();
+    
+    // read measurement data: 2 bytes co2, 1 byte CRC,
+    // 2 bytes T, 1 byte CRC, 2 bytes RH, 1 byte CRC,
+    // 2 bytes sensor status, 1 byte CRC
+    // stop reading after 12 bytes (not used)
+    // other data like  ASC not included
+    Wire.requestFrom(SCD_ADDRESS, 12);
+    counter = 0;
+    while (Wire.available()) {
+      data[counter++] = Wire.read();
+    }
+    
+    // floating point conversion according to datasheet
+    co2 = (float)((uint16_t)data[0] << 8 | data[1]);
+    // convert T in degC
+    temperature = -45 + 175 * (float)((uint16_t)data[3] << 8 | data[4]) / 65536;
+    // convert RH in %
+    humidity = 100 * (float)((uint16_t)data[6] << 8 | data[7]) / 65536;
 
-  Serial.println("[INFO] Displaying datas.");
-  display.display();
+    scd4x.powerDown();
+    isSleep = true;
 
-  Serial.println("[ALERT] Standby mode until next measurement.\n");
-  delay(system.measuringFrequency); // wait
+    Serial.println("[ALERT] Pushing new values.");
+    data1.co2Value = (uint16_t)co2;
+    data1.temperatureValue = temperature;
+    data1.humidityValue = humidity; 
+    data2.luxValue = veml.readLux();
+    data2.batteryValue = readBatteryLevel();
+    
+    displayDatasToTerminal(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.luxValue, data2.batteryValue);
+    displayDatasToScreen(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.batteryValue);
 
-  #if ONLINE_STATUS == 1
-    datasReceivings();
-  #endif
+    // sensorAlertManager(0, data1.co2Value, device.co2Threshold);
+    // sensorAlertManager(1, data1.temperatureValue, device.temperatureThreshold);
+    // sensorAlertManager(2, data1.humidityValue, device.humidityThreshold);
+    // sensorAlertManager(3, data2.noiseValue, device.noiseThreshold); 
+    // sensorAlertManager(4, data2.luxValue, device.luxThreshold);
+    // sensorAlertManager(5, data2.batteryValue, device.batteryThreshold);
+
+    display.display();
+    Serial.println("[INFO] Displaying datas.");
+  }
 }
 // ------------------------ END OF INTERRUPTION ----------------------- //
 
@@ -584,7 +640,7 @@ void setup() {
   Serial.println("[INFO] Setting up microphone.");
 
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), buttonISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), buttonISR, FALLING);
   Serial.println("[INFO] Setting up external push button.");
 
   pinMode(batteryPin, INPUT);
@@ -598,36 +654,39 @@ void setup() {
   } Serial.println("[INFO] Serial communication available.");
   // ------------------------------------------------------ //
 
-  initializeLoRaWANGatewayConnexion();
+  #if ONLINE_STATUS == 1
+    initializeLoRaWANGatewayConnexion();
+  #endif
   initializeSensors();
   initializeScreen();
 
-  Serial.println("[INFO] Waiting for first measurement...(5sec)");
-  delay(5000);
+  Serial.println("[INFO] Waiting for first measurement...(10sec)");
+  delay(10000);
 }
 
 void loop() { 
   readSensorsData();
-  displayDatasToTerminal(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.soundValue, data2.luxValue, data2.batteryValue);
-  displayDatasToScreen(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.soundValue, data2.luxValue, data2.batteryValue);
+  displayDatasToTerminal(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.luxValue, data2.batteryValue);
+  displayDatasToScreen(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.batteryValue);
   
   #if ONLINE_STATUS == 1
-    datasTransmissions(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.soundValue, data2.luxValue, data2.batteryValue);
+    dataTransmission(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.luxValue, data2.batteryValue);
   #endif
 
-  sensorAlertManager(0, data1.co2Value, system.co2Threshold);
-  sensorAlertManager(1, data1.temperatureValue, system.temperatureThreshold);
-  sensorAlertManager(2, data1.humidityValue, system.humidityThreshold);
-  sensorAlertManager(3, data2.soundValue, system.soundThreshold); 
-  sensorAlertManager(4, data2.luxValue, system.luxThreshold);
-  sensorAlertManager(5, data2.batteryValue, system.batteryThreshold);
+  sensorAlertManager(0, data1.co2Value, device.co2Threshold);
+  sensorAlertManager(1, data1.temperatureValue, device.temperatureThreshold);
+  sensorAlertManager(2, data1.humidityValue, device.humidityThreshold);
+  sensorAlertManager(3, data2.noiseValue, device.noiseThreshold); 
+  sensorAlertManager(4, data2.luxValue, device.luxThreshold);
+  sensorAlertManager(5, data2.batteryValue, device.batteryThreshold);
 
+  display.display();
   Serial.println("[INFO] Displaying datas.");
 
   Serial.println("[ALERT] Standby mode until next measurement.\n");
-  delay(system.measuringFrequency); // wait
+  delay(device.measuringFrequency); // wait
 
   #if ONLINE_STATUS == 1
-    datasReceivings();
+    dataReception();
   #endif
 }

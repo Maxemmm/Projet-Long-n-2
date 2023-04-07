@@ -2,7 +2,7 @@
 #define SYSTEM_H
 
 // -------------- CUSTOM DEFINES --------------- //
-#define ONLINE_STATUS 0 // ONLINE: 1, OFFLINE: 0
+#define ONLINE_STATUS 1 // ONLINE: 1, OFFLINE: 0
 
 // -------------- DISPLAY DEFINES -------------- //
 #define EPD_CS      4
@@ -17,7 +17,7 @@
 #define CO2_THRESHOLD 1700
 #define TEMP_THRESHOLD 30
 #define HUM_THRESHOLD 60
-#define SOUND_THRESHOLD 60
+#define NOISE_THRESHOLD 60
 #define LUX_THRESHOLD 1000
 #define BATT_THRESHOLD 20
 
@@ -32,10 +32,16 @@ const int microphonePin = A2;
 const int interruptPin = 1;
 
 /* LoRaWAN ID */
-#if ONLINE_STATUS == 1
-  String appEui = "0000000000000000";
-  String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
-#endif
+// #if ONLINE_STATUS == 1
+//   String appEui = "0000000000000000";
+//   String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
+// #endif
+// String appEui = "0000000000000000";
+// String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
+
+/* Temporary variables */
+bool isSleep = false;
+const int SCD_ADDRESS = 0x62;
 
 // -------------- STRUCTURES -------------- //
 struct scd4xSensor {
@@ -45,17 +51,17 @@ struct scd4xSensor {
 };
 
 struct otherSensor {
-  double soundValue = 0;
+  double noiseValue = 0;
   int luxValue = 0,
       batteryValue;
 };
 
-struct SystemConfigurationSettings {
+struct systemConfigurationSettings {
   unsigned long measuringFrequency = 60000; // measuring every 1 minutes
   int co2Threshold = CO2_THRESHOLD, // (ppm)
       temperatureThreshold = TEMP_THRESHOLD, // (°C)
       humidityThreshold = HUM_THRESHOLD, // (%)
-      soundThreshold = SOUND_THRESHOLD, // (dB)
+      noiseThreshold = NOISE_THRESHOLD, // (dB)
       luxThreshold = LUX_THRESHOLD, // (LUX)
       batteryThreshold = BATT_THRESHOLD; // (%)
 };
@@ -63,41 +69,40 @@ struct SystemConfigurationSettings {
 // -------------- FUNCTION DECLARATIONS -------------- //
 
 /* Setups */
-void initializeLoRaWANGatewayConnexion(void);
-void initializeGroveSensor(void);
-void initializeLuxSensor(void);
-void initializeSensors(void);
-void initializeScreen(void);
+void initializeLoRaWANGatewayConnexion();
+void initializeGroveSensor();
+void initializeLuxSensor();
+void initializeSensors();
+void initializeScreen();
 
 /* Sensors datas acquirement */
-unsigned int getPeakToPeakValue(void);
-double readSoundLevel(void);
-int readBatteryLevel(void);
-void readSensorsData(void);
+double readNoiseLevel();
+int readBatteryLevel();
+void readSensorsData();
 
 /* Alert sensor management */
 void sensorAlertManager(uint8_t type, int value, int threshold);
 
 /* Display overlay initilization */
-void co2ScreenOverlay(void);
-void temperatureScreenOverlay(void);
-void humidityScreenOverlay(void);
-void decibelScreenOverlay(void);
-void batteryScreenOverlay(void);
-void setupScreenOverlay(void);
+void co2ScreenOverlay();
+void temperatureScreenOverlay();
+void humidityScreenOverlay();
+void decibelScreenOverlay();
+void batteryScreenOverlay();
+void setupScreenOverlay();
 
 /* Display values */
-void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor, double soundSensor, int luxSensor, int batteryLevel);
-void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSensor, double soundSensor, int luxSensor, int batteryLevel);
+void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int batteryLevel);
+void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSensor, int batteryLevel);
 
 /* LoRaWAN Tx & Rx */
 #if ONLINE_STATUS == 1
-  void dataTransmission(void);
-  void dataReception(void);
+  void dataTransmission();
+  void dataReception();
 #endif
 
 /* Button callback interruption */
-void buttonISR(void);
+void buttonISR();
 
 /* Change sensor treshold */
 // TODO
