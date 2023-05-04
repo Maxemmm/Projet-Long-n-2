@@ -51,9 +51,15 @@ For this project I made a box to contain all the components as well as the PCB o
 ### 3D Model
 
 <details>
-<summary>Picture</summary>
+<summary>Overall view</summary>
 
 ![](images/3D/final-project-grey.png)
+</details>
+
+<details>
+<summary>Exploaded View</summary>
+
+![](images/3D/final-project-exploaded_view-grey.png)
 </details>
 
 The model includes 9 total pieces:
