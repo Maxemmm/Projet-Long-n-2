@@ -26,43 +26,43 @@ In order to realize this project, we had to find components that best respond to
 
 For a total cost of 143.47€, we created [insert project name]. Responding to the specifications imposed, this energy autonomous system allows to manage the constants of a room in order to respect the sanitary conditions imposed by the school, or by any other organization.
 
-## Installation
-In order to make this project work, you need to gather the same components as listed above. 
+## 3D Modeling
+For this project I made a box to contain all the components as well as the PCB on which is mounted the Arduino MKR 1310 board and the indoors solar cells that allow the system to be self-sufficient in terms of energy.
 
-In case you don't have the same components, you will just have to modify the code at the location of the different sensors you want to use.
+### 3D folder tree
 
-Otherwise you will need to install the following libraries in arduino or on their respective repositories:
-
-```sh
-SensirionI2CScd4x v0.4.0: CO2, T° & Humidity sensor
-```
-```sh
-Sensirion Core v0.6.0: Sensirion sensors core.
-```
-```sh
-Adafruit_VEML7700 v2.1.2 : VEML7700 sensors in the Adafruit shop
-```
-```sh
-Wire
-```
-```sh
-Adafruit_GFX v1.11.4:
-```
-```sh
-Adafruit_EPD v4.5.1:
-```
-```sh
-MKRWAN v1.1.0 : Provides APIs to communicate with LoRaWAN networks.
-```
-```sh
-ArduinoLowPower v1.2.2
+```bash
+.
+├── Projet_rev11.f3z
+├── Boitier_rev05.f3d
+├── Bouton_rev01.f3d
+├── Dos-Boitier_rev02.f3d
+├── Panneau-Solaire-Haut_rev02
+├── Panneau-Solaire-Haut
+│   ├── Cache-Panneau-Solaire-Haut
+│   └── Support-Panneau-Solaire-Haut
+├── Panneau-Solaire-Cotes_rev04
+└── Panneau-Solaire-Cotes
+    ├── Cache-Panneau-Solaire-Cotes
+    └── Support-Panneau-Solaire-Cotes
 ```
 
-To format some data you will also need:
-```sh
-avr/dtostrf
-```
+### Model parts
+The model includes 9 total pieces:
+| Part | Nb | Description |
+| ------ | ------ | ------ |
+| Boitier | x1 | The box is the structure of the system and allows to hold the different components and sensors of the project. |
+| Dos-Boitier | x1 | The back of the case is removable and allows to fix the PCB directly on it. By removing this part, you can access the inside of the box. |
+| Bouton | x1 | The custom button allows instant measurement. |
+| Support-Panneau-Solaire-Haut | x1 | This support must be fixed on the top of the box and allows to hold the upper solar panel. |
+| Cache-Panneau-Solaire-Haut | x1 |This cover allows the top solar panel to be plated against the support. |
+| Support-Panneau-Solaire-Cotes | x2 | This support must be fixed on the side of the box and allows to hold the side solar panel. |
+| Cache-Panneau-Solaire-Cotes| x2 | This cover allows the side solar panel to be pressed against the support. |
 
-```sh
-stdlib
-```
+### Mounting
+To assemble the parts together you need the parts listed above as well as the material below:
+| Hardware | Nb | Type |  Description |
+| ------ | ------ | ------ | ------ |
+| Screws | x16 | M3x8mm | Allows to fix the upper and lateral supports of the solar panels. |
+| Anti-skid pads | x4 | 10x3mm | Allows to elevate the case and to give it more grip on the ground. |
+
