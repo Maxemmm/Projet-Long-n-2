@@ -57,7 +57,7 @@ For this project I made a box to contain all the components as well as the PCB o
 </details>
 
 <details>
-<summary>Exploaded View</summary>
+<summary>Exploaded view</summary>
 
 ![](images/3D/final-project-exploaded_view-grey.png)
 </details>
