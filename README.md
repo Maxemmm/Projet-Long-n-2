@@ -49,11 +49,7 @@ For this project I made a box to contain all the components as well as the PCB o
     └── Support-Panneau-Solaire-Cotes
 ```
 
-### <details><summary>3D Model</summary>
-    
-    ![](images/3D/front-upper-right.png)
-    
-</details>
+### 3D Model
 
 The model includes 9 total pieces:
 | Part | Nb | Description |
