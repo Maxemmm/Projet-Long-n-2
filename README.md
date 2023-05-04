@@ -13,11 +13,11 @@ The goal of this project is to develop a complete device that can measure severa
 ## Components
 In order to realize this project, we had to find components that best respond to the imposed specifications by focusing on the main constraint which is the low consumption of the system:
 
-
+[Link]: # 'https://www.digikey.fr/en/products/detail/adafruit-industries-llc/4197/10060730'
 
 [<kbd> <br> Title <br> </kbd>][Link]
 
-[Link]: # 'https://www.digikey.fr/en/products/detail/adafruit-industries-llc/4197/10060730'
+
 
 | Components | Price |
 | ------ | ------ |
