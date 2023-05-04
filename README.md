@@ -15,7 +15,7 @@ In order to realize this project, we had to find components that best respond to
 
 | Components | Price |
 | ------ | ------ |
-| E-Ink Screen | 21.10€ | [button url="https://www.digikey.fr/en/products/detail/adafruit-industries-llc/4197/10060730"]
+| E-Ink Screen | 21.10€ | [button](https://www.digikey.fr/en/products/detail/adafruit-industries-llc/4197/10060730){: .btn}
 | [Indoor solar kit](https://www.mouser.fr/ProductDetail/PowerFilm/DEV-BASIC?qs=BJlw7L4Cy7%2Fw4dHFXPm5kg%3D%3D) | 55.97€ |
 | [CO2, T°, Humidity Sensor](https://www.digikey.fr/fr/products/detail/seeed-technology-co.,-ltd/101020952/14672116?utm_adgroup=&utm_source=google&utm_medium=cpc&utm_campaign=PMAX%20Shopping_Product_Development%20Board&utm_term=&productid=14672116&gclid=CjwKCAiA3KefBhByEiwAi2LDHGC3sSf3_wtaYPH630ib0XKAaLsoO_e8GBNamO-FCIEC66xhhMLAGhoCcFoQAvD_BwE) | 48.36€ |
 | [Noise Sensor](https://www.gotronic.fr/art-module-micro-mems-fermion-sen0487-34167.htm) | 3.50€ |
