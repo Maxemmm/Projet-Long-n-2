@@ -81,6 +81,6 @@ To assemble the parts together you need the parts listed above as well as the ma
 
 ## Consumption measurement
 
-[<kbd> <br> Go back up <br></kbd>][Link]
+[<kbd> <br> Go back up <br> <br> </kbd>][Link]
 
 [Link]: # 'https://github.com/Maxemmm/Projet-Long-n-2'
