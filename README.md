@@ -62,7 +62,7 @@ For this project I made a box to contain all the components as well as the PCB o
 ![](images/3D/final-project-exploaded_view-grey.png)
 </details>
 
-The model includes 9 total pieces:
+The model includes a total of 9 pieces:
 | Part | Nb | Description |
 | ------ | ------ | ------ |
 | Boitier | x1 | The box is the structure of the system and allows to hold the different components and sensors of the project. |
