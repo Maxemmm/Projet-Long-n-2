@@ -63,7 +63,7 @@ The model includes 9 total pieces:
 | Support-Panneau-Solaire-Cotes | x2 | This support must be fixed on the side of the box and allows to hold the side solar panel. |
 | Cache-Panneau-Solaire-Cotes| x2 | This cover allows the side solar panel to be pressed against the support. |
 
-### Mounting
+### Assembling
 To assemble the parts together you need the parts listed above as well as the material below:
 | Hardware | Nb | Type |  Description |
 | ------ | ------ | ------ | ------ |
