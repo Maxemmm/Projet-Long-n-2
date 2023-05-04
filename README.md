@@ -3,8 +3,9 @@
 
 <details>
     <summary>3D Model</summary>
-    ![](images/3D/front-upper-right.png)
+    [](images/3D/front-upper-right.png)
 </details>
+
 The goal of this project is to develop a complete device that can measure several physical datas and to make them available through a Human Machine Interface (HMI) on an internet application. This project will allow to recover and format the data measured by the sensors and then send them to a server (Cloud) thanks to the long range and low power technology (LPWAN).
 
 ## Features
