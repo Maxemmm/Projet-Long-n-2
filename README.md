@@ -1,8 +1,6 @@
 # Projet Long n°2
 ## _EI2I4 HF_ | _Groupe 2_
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
-
 The goal of this project is to develop a complete device that can measure several physical datas and to make them available through a Human Machine Interface (HMI) on an internet application. This project will allow to recover and format the data measured by the sensors and then send them to a server (Cloud) thanks to the long range and low power technology (LPWAN).
 
 ## Features
