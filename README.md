@@ -85,7 +85,7 @@ To assemble the parts together you need the parts listed above as well as the ma
 ### PCB
 
 <details>
-<summary>PCB Schematic</summary>
+<summary>### PCB</summary>
 
 ![](images/PCB/pcb.png)
 </details>
