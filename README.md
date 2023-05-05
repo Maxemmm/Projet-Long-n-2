@@ -84,11 +84,8 @@ To assemble the parts together you need the parts listed above as well as the ma
 ## Schematics
 ### PCB
 
-<details>
-<summary>### PCB</summary>
-
 ![](images/PCB/pcb.png)
-</details>
+
 
 ## Consumption measurement
 
