@@ -89,7 +89,7 @@ We have made a printed circuit board that allows us firstly to have a significan
 </details>
 
 <details>
-<summary>PCB</summary>
+<summary>Printed Circuit Board</summary>
 
 ![](images/PCB/pcb.png)
 </details>
