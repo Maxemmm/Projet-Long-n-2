@@ -87,7 +87,7 @@ We have made a printed circuit board that allows us firstly to have a significan
 ![](images/PCB/pcb.png)
 
 <details>
-<summary>Exploaded view</summary>
+<summary>Electrical scheme</summary>
 
 ![](images/PCB/electrical_schematics.png)
 </details>
