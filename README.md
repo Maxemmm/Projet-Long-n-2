@@ -25,11 +25,7 @@ In order to realize this project, we had to find components that best respond to
 For a total cost of 143.47€, we created [insert project name]. Responding to the specifications imposed, this energy autonomous system allows to manage the constants of a room in order to respect the sanitary conditions imposed by the school, or by any other organization.
 
 ## User interface
-<details>
-<summary>Overall view</summary>
-
-![](images/HMI/ubidots.png)
-</details>
+![](images/HMI/ubidots2.png)
 
 We used a Ubitdots STEM user interface which is a perfect environment to send data from our Arduino board to the cloud. The dashboard then allows the visualisation and monitoring of all this data remotely
 
