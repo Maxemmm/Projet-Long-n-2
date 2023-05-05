@@ -51,11 +51,7 @@ For this project I made a box to contain all the components as well as the PCB o
 ```
 
 ### 3D Model
-<details>
-<summary>Overall view</summary>
-
 ![](images/3D/final-project-grey.png)
-</details>
 
 <details>
 <summary>Exploaded view</summary>
