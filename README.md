@@ -84,7 +84,10 @@ To assemble the parts together you need the parts listed above as well as the ma
 We have made a printed circuit board that allows us firstly to have a significant reduction in the number of wires inside the box that houses the system and secondly to be able to weld the components and connect the sensors to their intended locations.
 <details><summary>PCB</summary>![](images/PCB/pcb.png)</details>
 
-<details><summary>Electrical scheme</summary>![](images/PCB/electrical_schematics.png)</details>
+<details>
+    <summary>Electrical scheme</summary>
+    ![](images/PCB/electrical_schematics.png)
+</details>
 
 ## Consumption measurement
 
