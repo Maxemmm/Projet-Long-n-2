@@ -2,7 +2,7 @@
 #define SYSTEM_H
 
 // -------------- CUSTOM DEFINES --------------- //
-#define ONLINE_STATUS 1 // ONLINE: 1, OFFLINE: 0
+#define ONLINE_STATUS 0 // ONLINE: 1, OFFLINE: 0
 
 // -------------- DISPLAY DEFINES -------------- //
 #define EPD_CS      4
@@ -11,7 +11,7 @@
 #define EPD_RESET   -1 // can set to -1 and share with microcontroller Reset!
 #define EPD_BUSY    -1 // can set to -1 to not use a pin (will wait a fixed delay)
 
-#define DISPLAY_MODE 1 // display setup
+#define DISPLAY_MODE 2 // display setup
 
 // -------------- THRESHOLDS DEFINES -------------- //
 #define CO2_THRESHOLD 1700
@@ -31,17 +31,10 @@ const int batteryPin = A1;
 const int microphonePin = A2;
 const int interruptPin = 1;
 
-/* LoRaWAN ID */
-// #if ONLINE_STATUS == 1
-//   String appEui = "0000000000000000";
-//   String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
-// #endif
-// String appEui = "0000000000000000";
-// String appKey = "E6A69E487ABFDBF5CB20A3A96A9BE266";
-
-/* Temporary variables */
+/* Unsorted variables */
 bool isSleep = false;
 const int SCD_ADDRESS = 0x62;
+volatile bool elementSent = false;
 
 // -------------- STRUCTURES -------------- //
 struct scd4xSensor {
@@ -84,12 +77,17 @@ void readSensorsData();
 void sensorAlertManager(uint8_t type, int value, int threshold);
 
 /* Display overlay initilization */
+void headerOverlay();
 void co2ScreenOverlay();
 void temperatureScreenOverlay();
 void humidityScreenOverlay();
 void decibelScreenOverlay();
 void batteryScreenOverlay();
 void setupScreenOverlay();
+void displayConnexionLogo(int16_t x, int16_t y);
+void displayBatteryLogo(int16_t x, int16_t y, int batteryLevel);
+void setHumidityLogo(int x, int y, int r);
+void setTemperatureLogo(int x, int y, int r, int h);
 
 /* Display values */
 void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int batteryLevel);

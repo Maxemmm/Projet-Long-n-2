@@ -21,9 +21,6 @@ systemConfigurationSettings device;
 
 ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 
-// int WIDTH = display.width();
-// int HEIGHT = display.height();
-
 // ---------------------------- DISPLAY MODE ---------------------------- //
 # if DISPLAY_MODE == 1
   GFXcanvas1 co2Canvas((WIDTH/5), (HEIGHT/5));
@@ -32,11 +29,11 @@ ThinkInk_213_Mono_BN display(EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
   GFXcanvas1 soundCanvas((WIDTH/5), (HEIGHT/5));
   GFXcanvas1 batteryCanvas((WIDTH/5), (HEIGHT/5));
 # elif DISPLAY_MODE == 2
-  GFXcanvas1 co2Canvas((WIDTH/2), (HEIGHT/2));
-  GFXcanvas1 tempCanvas((WIDTH/2), (HEIGHT/2));
-  GFXcanvas1 humCanvas((WIDTH/2), (HEIGHT/2));
-  GFXcanvas1 soundCanvas((WIDTH/2), (HEIGHT/2));
-  GFXcanvas1 batteryCanvas((WIDTH/2), (HEIGHT/2));
+  GFXcanvas1 co2Canvas((WIDTH/2 - 5), (HEIGHT/3));
+  GFXcanvas1 tempCanvas((WIDTH/4 + 12), (HEIGHT/5));
+  GFXcanvas1 humCanvas((WIDTH/4 - 23), (HEIGHT/5));
+  GFXcanvas1 batteryLogoCanvas(25, 12);
+  GFXcanvas1 connexionLogoCanvas(20, 12);
 # endif
 // ------------------------ END OF DISPLAY MODE ------------------------- //
 
@@ -94,26 +91,9 @@ void initializeGroveSensor() {
 void initializeLuxSensor() {
   if (!veml.begin()) {
     Serial.println("[ERROR] Lux sensor not found");
-    while (1);
-  }
-  Serial.println("[INFO] Lux sensor found");
-
-  Serial.print(F("[INFO] Lux sensor gain: "));
-  switch (veml.getGain()) {
-    case VEML7700_GAIN_1: Serial.println("1"); break;
-    case VEML7700_GAIN_2: Serial.println("2"); break;
-    case VEML7700_GAIN_1_4: Serial.println("1/4"); break;
-    case VEML7700_GAIN_1_8: Serial.println("1/8"); break;
-  }
-
-  Serial.print(F("[INFO] Lux sensor integration time (ms): "));
-  switch (veml.getIntegrationTime()) {
-    case VEML7700_IT_25MS: Serial.println("25"); break;
-    case VEML7700_IT_50MS: Serial.println("50"); break;
-    case VEML7700_IT_100MS: Serial.println("100"); break;
-    case VEML7700_IT_200MS: Serial.println("200"); break;
-    case VEML7700_IT_400MS: Serial.println("400"); break;
-    case VEML7700_IT_800MS: Serial.println("800"); break;
+    // while (1);
+  } else {
+    Serial.println("[INFO] Lux sensor found");    
   }
 }
 
@@ -141,8 +121,6 @@ void initializeScreen() {
   #endif
 
   setupScreenOverlay();
-  // canvas.setTextWrap(true);
-  // display.display();
 
   Serial.println("[INFO] Display ready for use.");  
 }
@@ -183,9 +161,32 @@ double readNoiseLevel() {
 }
 
 int readBatteryLevel() {
-  int batteryLevel = 0;
+  const float R1 = 680000; // resistance value of R1 in ohms
+  const float R2 = 390000; // resistance value of R2 in ohms
+  const float Vin = 3.35; // input voltage to voltage divider
+  float batteryVoltage = 0; // Variable pour stocker la tension de la batterie
 
-  return batteryLevel;
+  // Tableau de correspondance de la tension de la batterie au pourcentage de charge
+  const float batteryVoltageTable[] = {3.0, 3.3, 3.6, 3.7, 3.75, 3.79, 3.83, 3.87, 3.92, 3.97, 4.1, 4.2};
+  const int batteryPercentageTable[] = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+  const int batteryTableSize = sizeof(batteryVoltageTable) / sizeof(batteryVoltageTable[0]);
+
+  int sensorValue = analogRead(batteryPin); // Lire la valeur analogique de la broche A0
+  float voltage = sensorValue * (3.35 / 1023.0); // Convertir la valeur analogique en tension
+
+  // Calculer la tension de la batterie en utilisant le pont diviseur de tension
+  batteryVoltage = voltage / (R2 / (R1 + R2));
+
+  int batteryPercentage = 0;
+  for (int i = 0; i < batteryTableSize - 1; i++) {
+    if (batteryVoltage >= batteryVoltageTable[i] && batteryVoltage < batteryVoltageTable[i + 1]) {
+      float slope = (float)(batteryPercentageTable[i + 1] - batteryPercentageTable[i]) / (batteryVoltageTable[i + 1] - batteryVoltageTable[i]);
+      float offset = batteryPercentageTable[i] - slope * batteryVoltageTable[i];
+      batteryPercentage = (int)(slope * batteryVoltage + offset);
+      break;
+    }
+  }
+  return batteryPercentage;
 }
 
 void readSensorsData() {
@@ -217,16 +218,7 @@ void readSensorsData() {
   // ------------------------------------------------------ //
 
   // --------------------- LUX SENSOR --------------------- //
-  // Serial.print("raw ALS: "); Serial.println(veml.readALS());
-  // Serial.print("raw white: "); Serial.println(veml.readWhite());
   data2.luxValue = veml.readLux();  
-  // uint16_t irq = veml.interruptStatus();
-  // if (irq & VEML7700_INTERRUPT_LOW) {
-  //   Serial.println("[WARNING] Lux sensor low threshold");
-  // }
-  // if (irq & VEML7700_INTERRUPT_HIGH) {
-  //   Serial.println("[WARNING] Lux sensor high threshold");
-  // }
   // ------------------------------------------------------ //
 
   data2.batteryValue = readBatteryLevel();
@@ -281,6 +273,15 @@ void sensorAlertManager(uint8_t type, int value, int threshold) {
 
 
 // ----------------------------- OVERLAYS ----------------------------- //
+void headerOverlay() { //TODO get current time
+  display.setCursor(((WIDTH/2) - (WIDTH/4) + 35), 5);
+  display.setTextSize(2);
+  display.setTextColor(EPD_BLACK);
+  display.print("22:58");
+
+  display.drawRoundRect(2, 2, (WIDTH - 4), (HEIGHT/5 - 4), 4, EPD_BLACK);
+  display.drawRoundRect(2, (HEIGHT/5 + 2), (WIDTH - 4), (4 * HEIGHT/5 - 2), 4, EPD_BLACK);
+}
 void co2ScreenOverlay() {
   Serial.println("[INFO] Building co2 overlay...");
 
@@ -298,7 +299,15 @@ void co2ScreenOverlay() {
     display.setCursor((WIDTH/4 - 4), (HEIGHT - 15));
     display.print("ppm");
   #elif DISPLAY_MODE == 2
-    // TODO
+    display.setCursor(10, (HEIGHT/2 - 8));
+    display.setTextSize(3);
+    display.setTextColor(EPD_BLACK);
+    display.print("CO2");
+
+    display.setCursor((2*WIDTH/3 + 20), (HEIGHT/2 - 8));
+    display.setTextSize(3);
+    display.setTextColor(EPD_BLACK);
+    display.print("ppm");
   #endif
 
   Serial.println("[INFO] CO2 overlay has been pushed.");
@@ -321,7 +330,15 @@ void temperatureScreenOverlay() {
     display.setCursor((2*WIDTH/3 - 14), (HEIGHT/2 - 15));
     display.print("C");
   #elif DISPLAY_MODE == 2
-    // TODO
+    setTemperatureLogo(17, 107, 5, 15);
+    display.setCursor((WIDTH/2 - 19), 87);
+    display.setTextSize(2);
+    display.setTextColor(EPD_BLACK);
+    display.print("o");
+    display.setCursor((WIDTH/2 - 6), 92);
+    display.setTextSize(3);
+    display.setTextColor(EPD_BLACK);
+    display.print("C");
   #endif
 
   Serial.println("[INFO] Temperature overlay has been pushed.");
@@ -344,7 +361,12 @@ void humidityScreenOverlay() {
     display.setCursor((2*WIDTH/3 - 14), (HEIGHT - 15));
     display.print("%");
   #elif DISPLAY_MODE == 2
-    // TODO
+    setHumidityLogo((WIDTH/2 + 45), 107, 5);
+
+    display.setCursor((WIDTH/2 + 100), 92);
+    display.setTextSize(3);
+    display.setTextColor(EPD_BLACK);
+    display.print("%");
   #endif
 
   Serial.println("[INFO] Humidity overlay has been pushed.");
@@ -368,6 +390,7 @@ void decibelScreenOverlay() {
     display.print("dB");
   #elif DISPLAY_MODE == 2
     // TODO
+    Serial.println("[WARNING] No decibel overlay for this display parameter.");
   #endif
 
   Serial.println("[INFO] Decibel overlay has been pushed.");
@@ -391,18 +414,53 @@ void batteryScreenOverlay() {
     display.print("%");
   #elif DISPLAY_MODE == 2
     // TODO
+    Serial.println("[WARNING] No battery overlay in this configuration.");
   #endif
 
   Serial.println("[INFO] Battery overlay has been pushed.");
 }
 
 void setupScreenOverlay() {
+  headerOverlay();
   co2ScreenOverlay();
   temperatureScreenOverlay();
   humidityScreenOverlay();
   decibelScreenOverlay();
   batteryScreenOverlay();
   display.display();
+}
+
+void displayConnexionLogo(int16_t x, int16_t y) {
+  display.drawFastVLine(x, (y + 8), 2, EPD_BLACK);
+  display.drawFastVLine((x + 4), (y + 6), 4, EPD_BLACK);
+  display.drawFastVLine((x + 8), (y + 4), 6, EPD_BLACK);
+  display.drawFastVLine((x + 12), (y + 2), 8, EPD_BLACK);
+  if (!elementSent || ONLINE_STATUS == 0) {
+    display.drawLine((x - 2), (y + 5), (x + 2), (y + 1), EPD_BLACK);
+    display.drawLine((x - 2), (y + 1), (x + 2), (y + 5), EPD_BLACK);
+  }
+}
+
+void displayBatteryLogo(int16_t x, int16_t y, int batteryLevel) {
+  display.drawRoundRect(x, y, 20, 10, 1, EPD_BLACK);
+  display.drawRoundRect((x + 19), (y + 2), 3, 6, 1, EPD_BLACK);
+  int w = (batteryLevel * 20)/100;
+  display.fillRoundRect(x, y, w, 10, 1, EPD_BLACK);
+}
+
+void setHumidityLogo(int x, int y, int r) {
+  display.fillCircle(x, y, r, EPD_BLACK); 
+  display.fillTriangle((x - r + 1), (y - 4), (x + r - 1), (y - 4), x, (y - (r * 2) - 4), EPD_BLACK);
+}
+
+void setTemperatureLogo(int x, int y, int r, int h) {
+  display.fillCircle(x, (y), r, EPD_BLACK);
+  display.fillRoundRect((x - (r/2)), (y - 16), r, h, 2, EPD_BLACK);
+  display.drawFastVLine(x, (y - (h - 3)), (h - 3), EPD_WHITE);
+  display.drawFastHLine((x + (r/2) + 2), (y - 15), 4, EPD_BLACK);
+  display.drawFastHLine((x + (r/2) + 2), (y - 12), 2, EPD_BLACK);
+  display.drawFastHLine((x + (r/2) + 2), (y - 9), 2, EPD_BLACK);
+  display.drawFastHLine((x + (r/2) + 2), (y - 6), 4, EPD_BLACK);
 }
 // -------------------------- END OF OVERLAYS ------------------------- //
 
@@ -419,7 +477,11 @@ void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor,
     co2Canvas.print(co2Buffer);
     display.drawBitmap((WIDTH/12 - 10), (HEIGHT/2 - 8), co2Canvas.getBuffer(), co2Canvas.width(), co2Canvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
-    // TODO
+    co2Canvas.setTextSize(5); // size 3
+    co2Canvas.fillScreen(0);
+    co2Canvas.setCursor(0, 0);
+    co2Canvas.print(co2Buffer);
+    display.drawBitmap((WIDTH/2 - 60), (HEIGHT/2 - 21), co2Canvas.getBuffer(), co2Canvas.width(), co2Canvas.height(), EPD_BLACK, EPD_WHITE);
   #endif
 
   char tempBuffer[10];
@@ -432,7 +494,11 @@ void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor,
     tempCanvas.print(tempBuffer);
     display.drawBitmap((WIDTH/3 + 10), (HEIGHT/3 - 12), tempCanvas.getBuffer(), tempCanvas.width(), tempCanvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
-    // TODO
+    tempCanvas.setTextSize(3);
+    tempCanvas.fillScreen(0);
+    tempCanvas.setCursor(0, 0);
+    tempCanvas.print(tempBuffer);
+    display.drawBitmap(31, 92, tempCanvas.getBuffer(), tempCanvas.width(), tempCanvas.height(), EPD_BLACK, EPD_WHITE);
   #endif
 
   char humBuffer[10];
@@ -445,13 +511,16 @@ void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor,
     humCanvas.print(humBuffer);
     display.drawBitmap((WIDTH/3 + 10), (2*HEIGHT/3 + 8), humCanvas.getBuffer(), humCanvas.width(), humCanvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
-    // TODO
+    humCanvas.setTextSize(3);
+    humCanvas.fillScreen(0);
+    humCanvas.setCursor(0, 0);
+    humCanvas.print(humBuffer);
+    display.drawBitmap((WIDTH/2 + 60), 92, humCanvas.getBuffer(), humCanvas.width(), humCanvas.height(), EPD_BLACK, EPD_WHITE);
   #endif
 
-  char noiseBuffer[10];
-  dtostrf(noiseSensor, 4, 1, noiseBuffer);
-
   #if DISPLAY_MODE == 1
+    char noiseBuffer[10];
+    dtostrf(noiseSensor, 4, 1, noiseBuffer);
     soundCanvas.setTextSize(2);
     soundCanvas.fillScreen(0);
     soundCanvas.setCursor(0, 0);
@@ -459,19 +528,29 @@ void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor,
     display.drawBitmap((2*WIDTH/3 + 10), (HEIGHT/3 - 12), soundCanvas.getBuffer(), soundCanvas.width(), soundCanvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
     // TODO
+    Serial.println("[WARNING] No decibel overlay for this display parameter.");
   #endif
-
-  char batteryBuffer[10];
-  itoa(batteryLevel, batteryBuffer, 10);
   
+  int batteryState = readBatteryLevel();
+
   #if DISPLAY_MODE == 1
+    char batteryBuffer[10];
+    itoa(batteryLevel, batteryBuffer, 10);
     batteryCanvas.setTextSize(2);
     batteryCanvas.fillScreen(0);
     batteryCanvas.setCursor(0, 0);
     batteryCanvas.print(batteryBuffer);
     display.drawBitmap((2*WIDTH/3 + 10), (2*HEIGHT/3 + 8), batteryCanvas.getBuffer(), batteryCanvas.width(), batteryCanvas.height(), EPD_BLACK, EPD_WHITE);
   #elif DISPLAY_MODE == 2
-    // TODO
+    batteryLogoCanvas.fillScreen(0);
+    display.drawBitmap((WIDTH - (WIDTH/8)), 7, batteryLogoCanvas.getBuffer(), batteryLogoCanvas.width(), batteryLogoCanvas.height(), EPD_BLACK, EPD_WHITE);
+    displayBatteryLogo((WIDTH - (WIDTH/8)), 7, batteryState);
+  #endif
+
+  #if DISPLAY_MODE == 2
+    connexionLogoCanvas.fillScreen(0);
+    display.drawBitmap(11, 7, connexionLogoCanvas.getBuffer(), connexionLogoCanvas.width(), connexionLogoCanvas.height(), EPD_BLACK, EPD_WHITE);    
+    displayConnexionLogo(14, 7);
   #endif
 
   Serial.println("[ALERT] Sensor's datas are being pushed.");
@@ -526,10 +605,12 @@ void dataTransmission(unsigned short co2Sensor, float tempSensor, float humSenso
   if (err > 0) {
     Serial.println("[INFO] Message sent correctly!");
     // TODO: add an icon to the screen to indicate that the message has been sent
+    elementSent = true;
   } else {
     Serial.println("[ERROR] Couldn't send the message.");
     // TODO: add an icon to the screen to indicate that the message couldn't be sent
-  }  
+    elementSent = false;
+  } 
 }
 
 void dataReception() {
@@ -620,13 +701,6 @@ void buttonISR() {
     displayDatasToTerminal(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.luxValue, data2.batteryValue);
     displayDatasToScreen(data1.co2Value, data1.temperatureValue, data1.humidityValue, data2.noiseValue, data2.batteryValue);
 
-    // sensorAlertManager(0, data1.co2Value, device.co2Threshold);
-    // sensorAlertManager(1, data1.temperatureValue, device.temperatureThreshold);
-    // sensorAlertManager(2, data1.humidityValue, device.humidityThreshold);
-    // sensorAlertManager(3, data2.noiseValue, device.noiseThreshold); 
-    // sensorAlertManager(4, data2.luxValue, device.luxThreshold);
-    // sensorAlertManager(5, data2.batteryValue, device.batteryThreshold);
-
     display.display();
     Serial.println("[INFO] Displaying datas.");
   }
@@ -639,7 +713,7 @@ void setup() {
   pinMode(microphonePin, INPUT);
   Serial.println("[INFO] Setting up microphone.");
 
-  pinMode(interruptPin, INPUT);
+  pinMode(interruptPin, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(interruptPin), buttonISR, FALLING);
   Serial.println("[INFO] Setting up external push button.");
 
