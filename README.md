@@ -92,7 +92,13 @@ We have made a printed circuit board that allows us firstly to have a significan
 </details>
 
 ## Consumption measurement
-TEST <br>
+In this section, we will focus on the production and consumption of electricity. In order to make the device autonomous, we added the DEV-BASIC Powerfilm module, which includes two interior solar panels (we only used these), two exterior solar panels, an electronic board, and a battery. We also had two ECS300 solar panels available.
+
+Therefore, we connected these four solar panels in parallel (to increase the current as much as possible) and connected them to the "Solar" input of the board. Then, we connected the battery to the "battery" output of the board and connected the "Vout" part of the board to the rest of the circuit.
+
+Thanks to this setup, the solar panels continuously charge the battery, which then powers the board. Once the setup was completed, we measured the electricity production and found that our production was about 0.990mA/h on average (~380 lumens).
+
+After that, we measured the consumption of the setup and found that it consumed an average of XXXX mA, thanks to code optimization and activated deep sleep and standby modes. <br>
 [<kbd> <br> &uarr; Go back up &uarr; <br> <br> </kbd>][Link]
 
 [Link]: # 'https://github.com/Maxemmm/Projet-Long-n-2'
