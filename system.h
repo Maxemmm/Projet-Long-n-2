@@ -14,7 +14,7 @@
 #define DISPLAY_MODE 2 // display setup
 
 // -------------- THRESHOLDS DEFINES -------------- //
-#define CO2_THRESHOLD 1700
+#define CO2_THRESHOLD 1000
 #define TEMP_THRESHOLD 30
 #define HUM_THRESHOLD 60
 #define NOISE_THRESHOLD 60
@@ -25,6 +25,12 @@
 /* Display */
 int WIDTH = 250;
 int HEIGHT = 122;
+uint16_t fontColorCO2 = EPD_BLACK;
+uint16_t backgroundColorCO2 = EPD_WHITE;
+uint16_t fontColorHeader = EPD_BLACK;
+uint16_t backgroundColorHeader = EPD_WHITE;
+uint16_t fontColorFooter = EPD_BLACK;
+uint16_t backgroundColorFooter = EPD_WHITE;
 
 /* Arduino Pins */
 const int batteryPin = A1;
@@ -32,12 +38,16 @@ const int microphonePin = A2;
 const int interruptPin = 1;
 
 /* Unsorted variables */
-bool isSleep = false;
+static char errorMessage[128];
+static int16_t error;
+// bool isSleep = false;
 const int SCD_ADDRESS = 0x62;
 volatile bool elementSent = false;
+volatile bool maxThresholdCO2 = false;
+
 
 // -------------- STRUCTURES -------------- //
-struct scd4xSensor {
+struct scd30Sensor {
   uint16_t co2Value;
   float temperatureValue,
         humidityValue;
@@ -90,12 +100,12 @@ void setHumidityLogo(int x, int y, int r);
 void setTemperatureLogo(int x, int y, int r, int h);
 
 /* Display values */
-void displayDatasToScreen(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int batteryLevel);
-void displayDatasToTerminal(uint16_t co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSensor, int batteryLevel);
+void displayDatasToScreen(float co2Sensor, float tempSensor, float humSensor, double noiseSensor, int batteryLevel);
+void displayDatasToTerminal(float co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSensor, int batteryLevel);
 
 /* LoRaWAN Tx & Rx */
 #if ONLINE_STATUS == 1
-  void dataTransmission();
+  void dataTransmission(float co2Sensor, float tempSensor, float humSensor, double noiseSensor, int luxSens, int batteryLevel);
   void dataReception();
 #endif
 
