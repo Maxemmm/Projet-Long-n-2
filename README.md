@@ -99,6 +99,3 @@ Therefore, we connected these four solar panels in parallel (to increase the cur
 Thanks to this setup, the solar panels continuously charge the battery, which then powers the board. Once the setup was completed, we measured the electricity production and found that our production was about 0.990mA/h on average (~380 lumens).
 
 After that, we measured the consumption of the setup and found that it consumed an average of XXXX mA, thanks to code optimization and activated deep sleep and standby modes. <br>
-[<kbd> <br> &uarr; Go back up &uarr; <br> <br> </kbd>][Link]
-
-[Link]: # 'https://github.com/Maxemmm/Room-Monitoring-Device'
