@@ -101,4 +101,4 @@ Thanks to this setup, the solar panels continuously charge the battery, which th
 After that, we measured the consumption of the setup and found that it consumed an average of XXXX mA, thanks to code optimization and activated deep sleep and standby modes. <br>
 [<kbd> <br> &uarr; Go back up &uarr; <br> <br> </kbd>][Link]
 
-[Link]: # 'https://github.com/Maxemmm/Projet-Long-n-2'
+[Link]: # 'https://github.com/Maxemmm/Room-Monitoring-Device'
